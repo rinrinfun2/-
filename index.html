@@ -2,38 +2,70 @@
 <html>
 <head>
     <style>
-        body { font-family: sans-serif; padding: 10px; }
-        input { width: 80%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        #results { margin-top: 15px; }
-        .item { margin-bottom: 10px; border-bottom: 1px dotted #ccc; padding-bottom: 5px; }
-        a { color: #1a73e8; text-decoration: none; font-weight: bold; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 15px; background: transparent; }
+        .search-container { display: flex; gap: 8px; margin-bottom: 20px; }
+        input { 
+            flex-grow: 1; padding: 10px 15px; 
+            border: 2px solid #dfe1e5; border-radius: 24px; 
+            outline: none; font-size: 16px;
+        }
+        input:focus { border-color: #4285f4; }
+        button { 
+            padding: 10px 20px; background-color: #4285f4; 
+            color: white; border: none; border-radius: 24px; 
+            cursor: pointer; font-weight: bold; font-size: 14px;
+        }
+        button:hover { background-color: #357ae8; }
+        #results { max-height: 400px; overflow-y: auto; }
+        .item { 
+            margin-bottom: 8px; padding: 12px; 
+            background: rgba(255,255,255,0.8); 
+            border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        a { color: #1a0dab; text-decoration: none; font-size: 18px; font-weight: 500; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <input type="text" id="searchInput" placeholder="サイト内を検索...">
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="キーワードを入力...">
+        <button onclick="executeSearch()">検索</button>
+    </div>
     <div id="results"></div>
 
     <script>
         const gasUrl = 'https://script.google.com/a/macros/seirinkan.ed.jp/s/AKfycby3gnsjIevJiZL3rktzbFHNqeDAdRsATJaGMASBNN-_oVMxO6mKURYjuaKk6prYNxSg/exec';
         let searchData = [];
 
-       
+        
         fetch(gasUrl)
             .then(res => res.json())
-            .then(data => searchData = data);
+            .then(data => {
+                searchData = data;
+                console.log("データ読み込み完了");
+            })
+            .catch(err => console.error("データ取得エラー:", err));
 
-       
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
+        
+        function executeSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
 
-            if (query === '') return;
+            if (query.trim() === '') {
+                resultsDiv.innerHTML = '<p style="color:#777;">キーワードを入力してください</p>';
+                return;
+            }
 
             const filtered = searchData.filter(item => 
                 item.title.toLowerCase().includes(query) || 
                 item.keyword.toLowerCase().includes(query)
             );
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<p style="color:#777;">見つかりませんでした</p>';
+                return;
+            }
 
             filtered.forEach(item => {
                 const div = document.createElement('div');
@@ -41,6 +73,11 @@
                 div.innerHTML = `<a href="${item.url}" target="_top">${item.title}</a>`;
                 resultsDiv.appendChild(div);
             });
+        }
+
+        
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeSearch();
         });
     </script>
 </body>
